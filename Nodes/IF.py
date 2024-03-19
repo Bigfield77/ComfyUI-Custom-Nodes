@@ -230,7 +230,7 @@ class Encode:
 
     CATEGORY = "Zuellni/IF"
     FUNCTION = "process"
-    RETURN_TYPES = ("POSITIVE", "NEGATIVE")
+    RETURN_TYPES = ("CONDITIONING", "CONDITIONING")
 
     def process(self, model, positive, negative):
         positive, negative = model.encode_prompt(
@@ -247,8 +247,8 @@ class Stage_I:
         return {
             "required": {
                 "model": ("S1_MODEL",),
-                "positive": ("POSITIVE",),
-                "negative": ("NEGATIVE",),
+                "positive": ("CONDITIONING",),
+                "negative": ("CONDITIONING",),
                 "width": ("INT", {"default": 64, "min": 8, "max": 128, "step": 8}),
                 "height": ("INT", {"default": 64, "min": 8, "max": 128, "step": 8}),
                 "batch_size": ("INT", {"default": 1, "min": 1, "max": 64}),
@@ -297,11 +297,12 @@ class Stage_II:
         return {
             "required": {
                 "model": ("S2_MODEL",),
-                "positive": ("POSITIVE",),
-                "negative": ("NEGATIVE",),
+                "positive": ("CONDITIONING",),
+                "negative": ("CONDITIONING",),
                 "images": ("IMAGE",),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF}),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 10000}),
+                "noise": ("INT", {"default": 150, "min": 1, "max": 999}),
                 "cfg": ("FLOAT", {"default": 8.0, "min": 0.0, "max": 100.0}),
             },
         }
@@ -311,7 +312,7 @@ class Stage_II:
     RETURN_NAMES = ("IMAGES",)
     RETURN_TYPES = ("IMAGE",)
 
-    def process(self, model, images, positive, negative, seed, steps, cfg):
+    def process(self, model, images, positive, negative, seed, steps, noise, cfg):
         images = images.permute(0, 3, 1, 2)
         progress = ProgressBar(steps)
         batch_size = images.shape[0]
@@ -332,6 +333,7 @@ class Stage_II:
             width=images.shape[3] // 8 * 8 * 4,
             generator=torch.manual_seed(seed),
             guidance_scale=cfg,
+            noise_level=noise,
             num_inference_steps=steps,
             callback=callback,
             output_type="pt",
