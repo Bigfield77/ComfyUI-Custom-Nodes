@@ -237,8 +237,8 @@ class Encode:
             prompt=positive,
             negative_prompt=negative,
         )
-
-        return (positive, negative)
+                
+        return ([[positive, {"pooled_output": None}]], [[negative, {"pooled_output": None}]])
 
 
 class Stage_I:
@@ -266,6 +266,8 @@ class Stage_I:
     def process(
         self, model, positive, negative, width, height, batch_size, seed, steps, cfg
     ):
+        positive=positive[0][0]
+        negative=negative[0][0]
         progress = ProgressBar(steps)
 
         def callback(step, time_step, latent):
@@ -313,6 +315,9 @@ class Stage_II:
     RETURN_TYPES = ("IMAGE",)
 
     def process(self, model, images, positive, negative, seed, steps, noise, cfg):
+        positive=positive[0][0]
+        negative=negative[0][0]
+        
         images = images.permute(0, 3, 1, 2)
         progress = ProgressBar(steps)
         batch_size = images.shape[0]
